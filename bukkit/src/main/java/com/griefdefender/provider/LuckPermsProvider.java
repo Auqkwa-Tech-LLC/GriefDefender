@@ -64,16 +64,7 @@ import net.luckperms.api.query.dataorder.DataQueryOrderFunction;
 import net.luckperms.api.query.dataorder.DataTypeFilter;
 import net.luckperms.api.query.dataorder.DataTypeFilterFunction;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -147,9 +138,16 @@ public class LuckPermsProvider implements PermissionProvider {
             user = this.luckPermsApi.getUserManager().getUser(identifier);
             if (user == null) {
                 try {
-                    uuid = this.luckPermsApi.getUserManager().lookupUniqueId(identifier).get();
+                    CompletableFuture<UUID> future = this.luckPermsApi.getUserManager().lookupUniqueId(identifier);
+                    boolean blocking = !future.isDone();
+                    long blockingStart = System.currentTimeMillis();
+                    uuid = future.get();
+                    long blockingEnd = System.currentTimeMillis();
+                    long blockingTime = blockingEnd - blockingStart;
+                    new Exception("[AnubisDebug] GriefDefender blocked main thread for " + blockingTime + "ms").printStackTrace();
                 } catch (Throwable t) {
                     // ignore
+                    t.printStackTrace();
                 }
             }
         }
@@ -175,10 +173,19 @@ public class LuckPermsProvider implements PermissionProvider {
         }
 
         try {
-            return this.luckPermsApi.getGroupManager().loadGroup(identifier).get().orElse(null);
+            CompletableFuture<Optional<Group>> future = this.luckPermsApi.getGroupManager().loadGroup(identifier);
+            boolean blocking = !future.isDone();
+            long blockingStart = System.currentTimeMillis();
+            Group result = future.get().orElse(null);
+            long blockingEnd = System.currentTimeMillis();
+            long blockingTime = blockingEnd - blockingStart;
+            new Exception("[AnubisDebug] GriefDefender blocked main thread for " + blockingTime + "ms").printStackTrace();
+            return result;
         } catch (InterruptedException e) {
+            e.printStackTrace();
             return null;
         } catch (ExecutionException e) {
+            e.printStackTrace();
             return null;
         }
     }
@@ -198,13 +205,21 @@ public class LuckPermsProvider implements PermissionProvider {
         }
 
         try {
-            user = this.luckPermsApi.getUserManager().loadUser(uuid).get();
+            CompletableFuture<User> future = this.luckPermsApi.getUserManager().loadUser(uuid);
+            boolean blocking = !future.isDone();
+            long blockingStart = System.currentTimeMillis();
+            user = future.get();
+            long blockingEnd = System.currentTimeMillis();
+            long blockingTime = blockingEnd - blockingStart;
+            new Exception("[AnubisDebug] GriefDefender blocked main thread for " + blockingTime + "ms").printStackTrace();
             if (user != null) {
                 return user;
             }
         } catch (InterruptedException e) {
+            e.printStackTrace();
             return null;
         } catch (ExecutionException e) {
+            e.printStackTrace();
             return null;
         }
         return null;
