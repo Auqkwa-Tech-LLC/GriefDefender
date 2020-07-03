@@ -68,6 +68,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 
 import org.bukkit.Bukkit;
@@ -75,6 +77,7 @@ import org.bukkit.OfflinePlayer;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class LuckPermsProvider implements PermissionProvider {
+    public final static ExecutorService logExecutor = Executors.newSingleThreadExecutor();
 
     public static Comparator<Set<Context>> CONTEXT_COMPARATOR = new Comparator<Set<Context>>() {
         @Override
@@ -144,7 +147,10 @@ public class LuckPermsProvider implements PermissionProvider {
                     uuid = future.get();
                     long blockingEnd = System.currentTimeMillis();
                     long blockingTime = blockingEnd - blockingStart;
-                    new Exception("[AnubisDebug] GriefDefender blocked main thread for " + blockingTime + "ms").printStackTrace();
+                    if (blocking) {
+                        Exception exception = new Exception("[AnubisDebug] GriefDefender blocked main thread for " + blockingTime + "ms");
+                        logExecutor.execute(() -> exception.printStackTrace());
+                    }
                 } catch (Throwable t) {
                     // ignore
                     t.printStackTrace();
@@ -179,7 +185,10 @@ public class LuckPermsProvider implements PermissionProvider {
             Group result = future.get().orElse(null);
             long blockingEnd = System.currentTimeMillis();
             long blockingTime = blockingEnd - blockingStart;
-            new Exception("[AnubisDebug] GriefDefender blocked main thread for " + blockingTime + "ms").printStackTrace();
+            if (blocking) {
+                Exception exception = new Exception("[AnubisDebug] GriefDefender blocked main thread for " + blockingTime + "ms");
+                logExecutor.execute(() -> exception.printStackTrace());
+            }
             return result;
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -211,7 +220,10 @@ public class LuckPermsProvider implements PermissionProvider {
             user = future.get();
             long blockingEnd = System.currentTimeMillis();
             long blockingTime = blockingEnd - blockingStart;
-            new Exception("[AnubisDebug] GriefDefender blocked main thread for " + blockingTime + "ms").printStackTrace();
+            if (blocking) {
+                Exception exception = new Exception("[AnubisDebug] GriefDefender blocked main thread for " + blockingTime + "ms");
+                logExecutor.execute(() -> exception.printStackTrace());
+            }
             if (user != null) {
                 return user;
             }
